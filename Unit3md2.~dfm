@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 207
   Top = 225
   Width = 937
-  Height = 599
+  Height = 577
   Caption = 'Fun md2'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,7 @@ object Form1: TForm1
   OnKeyDown = FormKeyDown
   DesignSize = (
     921
-    560)
+    538)
   PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
@@ -91,7 +91,6 @@ object Form1: TForm1
         'Left - prev cadr'
         'Right - next cadr')
       ParentFont = False
-      ReadOnly = True
       TabOrder = 2
     end
   end
