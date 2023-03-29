@@ -438,8 +438,7 @@ for j:=0 to high(aj) do     // перебор частей и отрисовка
           cx:=v3.x-dx;
           cy:=v3.y-dy;
           cz:=v3.z-dz;
-          //x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
-          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*hypot(cz-ez/2,cx-ex/2));
+          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
           y3:=round((ey-cy)*k);
           a1[i]:=point(round(x3+ale[j]*(medx[aj[j][i]].x-x3)), //
                        round(y3+ale[j]*(medx[aj[j][i]].y-y3)));
