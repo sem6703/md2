@@ -218,7 +218,6 @@ var
  ale: array of single; // мастабирую части
  grop: array of integer;// принадлежность частей групам
  goy: integer;// група
- //ozz: single=1.0;//
  c3d: array of array of tvector3;
 
 implementation
@@ -227,8 +226,8 @@ implementation
 uses female;
 
 
-procedure fn_key;
-var i,j,k: integer;
+procedure fn_key; // бочкообразная трансформация модели
+var i: integer;
 begin
 for i:=0 to 255 do
   begin
@@ -238,7 +237,6 @@ for i:=0 to 255 do
       96..127:key[i]:=64+(i-96)*2;
       128: key[i]:=128;
       129..255:key[i]:=255-key[255-i];
-
     end;
   end;
 end;
@@ -249,16 +247,13 @@ end;
 
 procedure LoadModel(Filename: String; var Model: T3DModel);
 var F: File;
-    i, j, k: Integer;
-
+    i,j,k: Integer;
     Header: TMD2Header;
     TexCoords: array of TMD2TexCoord;
     Triangles: array of TMD2Face;
     Frames: array of TMD2Frame;
     Frame: TMD2AliasFrame;
-
     CurrentFrame: T3DObject;
-
     FrameNum: Integer;
     Animation: TAnimation;
     Name, LastName: String;
@@ -266,59 +261,19 @@ begin
 // Load model form file
  Assign(F, Filename);
  Reset(F, 1);
-
 // Header
  BlockRead(F, Header, SizeOf(TMD2Header));
  if Header.Version <> 8 then Exit;
-    (*
-form1.Memo1.Lines.Add('const MHeader: TMD2Header=(');
-
-form1.Memo1.Lines.Add(format('    Magic:%d;',[Header.Magic]));
-form1.Memo1.Lines.Add(format('    Version:%d;',[Header.Version]));
-form1.Memo1.Lines.Add(format('    SkinWidth:%d;',[Header.SkinWidth]));
-form1.Memo1.Lines.Add(format('    SkinHeight:%d;',[Header.SkinHeight]));
-form1.Memo1.Lines.Add(format('    FrameSize:%d;',[Header.FrameSize]));
-form1.Memo1.Lines.Add(format('    NumSkins:%d;',[Header.NumSkins]));
-form1.Memo1.Lines.Add(format('    NumVertices:%d;',[Header.NumVertices]));
-form1.Memo1.Lines.Add(format('    NumTexCoords:%d;',[Header.NumTexCoords]));
-form1.Memo1.Lines.Add(format('    NumTriangles:%d;',[Header.NumTriangles]));
-form1.Memo1.Lines.Add(format('    NumGLCommands:%d;',[Header.NumGLCommands]));
-form1.Memo1.Lines.Add(format('    NumFrames:%d;',[Header.NumFrames]));
-form1.Memo1.Lines.Add(format('    OffsetSkins:%d;',[Header.OffsetSkins]));
-form1.Memo1.Lines.Add(format('    OffsetTexCoords:%d;',[Header.OffsetTexCoords]));
-form1.Memo1.Lines.Add(format('    OffsetTriangles:%d;',[Header.OffsetTriangles]));
-
-form1.Memo1.Lines.Add(format('    OffsetFrames:%d;',[Header.OffsetFrames]));
-form1.Memo1.Lines.Add(format('    OffsetGLCommands:%d;',[Header.OffsetGLCommands]));
-form1.Memo1.Lines.Add(format('    OffsetEnd: %d',[Header.OffsetEnd]));
-form1.Memo1.Lines.Add('    );');
-  *)
 // Texture coords
  Seek(F, Header.OffsetTexCoords);
  SetLength(TexCoords, Header.NumTexCoords);
  BlockRead(F, TexCoords[0], SizeOf(TMD2TexCoord) * Header.NumTexCoords);
- (*
-form1.Memo1.Lines.Add(format('const MTexCoords: array [0..%d] of TMD2TexCoord=(',[Header.NumTexCoords-1]));
-
-for i:=0 to Header.NumTexCoords-1 do
-  form1.Memo1.Lines.Add(format('(u:%d; v:%d),',[TexCoords[i].u,TexCoords[i].v]));
-     *)
 // Triangles
  Seek(F, Header.OffsetTriangles);
  SetLength(Triangles, Header.NumTriangles);
  BlockRead(F, Triangles[0], SizeOf(TMD2Face) * Header.NumTriangles);
-    (*
-form1.Memo1.Lines.Add(format('const MTriangles: array [0..%d] of TMD2Face=(',[Header.NumTriangles-1]));
-for i:=0 to Header.NumTriangles-1 do
-  form1.Memo1.lines.add(format('(VertexIndices:(%d,%d,%d); TextureIndices:(%d,%d,%d)),',
-  [Triangles[i].VertexIndices[0],Triangles[i].VertexIndices[1],Triangles[i].VertexIndices[2],
-  Triangles[i].TextureIndices[0],Triangles[i].TextureIndices[1],Triangles[i].TextureIndices[2]]));
-  *)
 // Frames
-// Seek(F, Header.OffsetFrames);
  SetLength(Frames, Header.NumFrames);
-
-///form1.Memo1.Lines.Add(format('const MFrames: array [0..%d] of MMD2AliasFrame=(',[Header.NumFrames-1]));
  for i := 0 to Header.NumFrames - 1 do
   begin
    Seek(F, Header.OffsetFrames+i*(SizeOf(Frame.Scale)+SizeOf(Frame.Translate)+SizeOf(Frame.Name)+SizeOf(TMD2AliasTriangle) * Header.NumVertices));
@@ -328,29 +283,10 @@ for i:=0 to Header.NumTriangles-1 do
    BlockRead(F, Frame.Translate, SizeOf(Frame.Translate));
    BlockRead(F, Frame.Name, SizeOf(Frame.Name));
    BlockRead(F, Frame.Vertices[0], SizeOf(TMD2AliasTriangle) * Header.NumVertices);
-
-   {
-form1.Memo1.Lines.Add(format('(Scale:(%f,%f,%f);',[Frame.Scale[0],Frame.Scale[1],Frame.Scale[2]]));
-form1.Memo1.Lines.Add(format('Translate:(%f,%f,%f);',[Frame.Translate[0],Frame.Translate[1],Frame.Translate[2]]));
-form1.Memo1.Lines.Add(format('Name:'#39'%s'#39';Vertices:(',[Frame.Name]));
-for j:=0 to Header.NumVertices-2 do
-  form1.Memo1.Lines.Add(format('(Vertex:(%d,%d,%d);LightNormalIndex:%d),',
-  [Frame.Vertices[j].vertex[0],Frame.Vertices[j].vertex[1],Frame.Vertices[j].vertex[2],
-  Frame.Vertices[j].LightNormalIndex]));
-j:=Header.NumVertices-1;
-  form1.Memo1.Lines.Add(format('(Vertex:(%d,%d,%d);LightNormalIndex:%d))),',
-  [Frame.Vertices[j].vertex[0],Frame.Vertices[j].vertex[1],Frame.Vertices[j].vertex[2],
-  Frame.Vertices[j].LightNormalIndex]));
-  }
- //  (Vertex:(%d,%d,%d);LightNormalIndex:%d)), )
-  // (Vertex:(101,143,225);LightNormalIndex:45)) )
- //   Vertex: array [0..2] of Byte;
- //   LightNormalIndex: Byte;
-//  end;
    SetLength(Frames[i].Vertices, Header.NumVertices);
    StrCopy(Frames[i].Name, Frame.Name);
 
-  for j := 4440 to Header.NumVertices - 1 do
+  for j := 4440 to Header.NumVertices - 1 do  // делаю бочку
     begin  // уродую    *****************************************************************
       for k:=0 to 0 do Frame.Vertices[j].Vertex[k]:=key[Frame.Vertices[j].Vertex[k]];
       Frame.Vertices[j].Vertex[1]:=key[Frame.Vertices[j].Vertex[1]];
@@ -365,17 +301,7 @@ j:=Header.NumVertices-1;
      Frames[i].Vertices[j].Vertex[1] := Frame.Vertices[j].Vertex[2] * Frame.Scale[2] + Frame.Translate[2];
     end;
     //***********************
-    {  молодец очень точно
-   Seek(F, Header.OffsetFrames+i*(SizeOf(Frame.Scale)+SizeOf(Frame.Translate)+SizeOf(Frame.Name)+SizeOf(TMD2AliasTriangle) * Header.NumVertices));
-   BlockWrite(F, Frame.Scale, SizeOf(Frame.Scale));
-   BlockWrite(F, Frame.Translate, SizeOf(Frame.Translate));
-   BlockWrite(F, Frame.Name, SizeOf(Frame.Name));
-   BlockWrite(F, Frame.Vertices[0], SizeOf(TMD2AliasTriangle) * Header.NumVertices);
-   }
   end;
-
-
-
  Close(F);//
 //************************
 
@@ -393,65 +319,18 @@ j:=Header.NumVertices-1;
      CurrentFrame.Vertexes[j].Y := Frames[i].Vertices[j].Vertex[1];
      CurrentFrame.Vertexes[j].Z := Frames[i].Vertices[j].Vertex[2];
     end;
-
    Model.Objects[i] := CurrentFrame;
   end;
-  (*
-// Parse animations
- for i := 0 to Model.NumObjects - 1 do
-  begin
-   Name := Model.Objects[i].Name;
-
-//   if TryStrToInt(Copy(Name, Length(Name) - 1, 2), FrameNum) then
-    begin
-     Delete(Name, Length(Name) - 1, 2);
-    end;
-//   else
- //   if TryStrToInt(Copy(Name, Length(Name), 1), FrameNum) then
-     begin
-      Delete(Name, Length(Name), 1);
-     end;
-//    else
-     begin
-      FrameNum := 1;
-     end;
-
-   if (Name <> LastName) then
-    begin
-     if LastName <> '' then
-      begin
-       Animation.Name := LastName;
-       Animation.EndFrame := i;
-       Inc(Model.NumAnimations);
-       SetLength(Model.Animations, Model.NumAnimations);
-       Model.Animations[Model.NumAnimations - 1] := Animation;
-       ZeroMemory(@Animation, SizeOf(Animation));
-      end;
-     Animation.StartFrame := FrameNum - 1 + i;
-    end;
-
-   LastName := Name;
-  end;
-
-// Free memory
- TexCoords := nil;
- Triangles := nil;
- Frames := nil;
-
- //model.Cf:=1;  Animation.StartFrame    @Model.Animations[1]       @
- model.Cf:=Model.Animations[1].StartFrame;
- *)
 end;
 
 
-procedure tform1.boo(xx: integer);
+procedure tform1.boo(xx: integer);  // отрисовка
   var i,j,k: integer;
   sx,dx,ex: single;
   sy,dy,ey: single;
   sz,dz,ez: single;
   cx,cy,cz: single;
   ex2: integer;
-  //a1: array[byte]of integer;
   a1: array of tpoint;
   x3,y3:integer;
   ii:real;
@@ -459,8 +338,8 @@ procedure tform1.boo(xx: integer);
   v3: tvector3;
 
 
-  function fnf: integer;
-  var i,j,k: integer;
+  function fnf: integer;    // посчитал запятые
+  var i: integer; //  ,j,k
   begin
     result:=-1;
     for i:=1 to length(d) do
@@ -468,21 +347,11 @@ procedure tform1.boo(xx: integer);
   end;
 begin
 goy:=grop[mar];
-(*
-memo1.Clear; s:='';
-for i:=0 to high(mot[0]) do memo1.Lines.Add(format('%d',[mot[0][i]]));
-if high(mot[0])>0 then begin
-  for i:=0 to high(mot[0])-1 do s:=s+format('%d, ',[mot[0][i]]);
-  s:=s+format('%d',[mot[0][high(mot[0])]]);
-  memo1.Lines.Add( format('waq([%s],1=1);',[s]) );
-end;
 
-
-if d>'' then memo1.lines.Add(format('swat: array[0..%d] of integer=(%s);',[fnf,copy(d,1,length(d)-2)]));
-*)
 setlength(medx,high(model.objects[0].vertexes)+1);
-//setlength(medz,high(model.objects[0].vertexes)+1);
-j:=xx;
+
+j:=xx;     //ищу минимаксы  (sx,dx,sy,dy,sz,dz)
+//****************************
 sx:=model.objects[j].vertexes[0].x;
 dx:=model.objects[j].vertexes[0].x;
 for i:=0 to  high(model.objects[0].vertexes) do
@@ -490,6 +359,7 @@ for i:=0 to  high(model.objects[0].vertexes) do
     if model.objects[j].vertexes[i].x>sx then sx:=model.objects[j].vertexes[i].x;
     if model.objects[j].vertexes[i].x<dx then dx:=model.objects[j].vertexes[i].x;
   end;
+  //************************
 sy:=model.objects[j].vertexes[0].y;
 dy:=model.objects[j].vertexes[0].y;
 for i:=0 to  high(model.objects[0].vertexes) do
@@ -497,6 +367,7 @@ for i:=0 to  high(model.objects[0].vertexes) do
     if model.objects[j].vertexes[i].y>sy then sy:=model.objects[j].vertexes[i].y;
     if model.objects[j].vertexes[i].y<dy then dy:=model.objects[j].vertexes[i].y;
   end;
+  //****************************
 sz:=model.objects[j].vertexes[0].z;
 dz:=model.objects[j].vertexes[0].z;
 for i:=0 to  high(model.objects[0].vertexes) do
@@ -507,33 +378,22 @@ for i:=0 to  high(model.objects[0].vertexes) do
 //****************
 k:=9;  // коэф увеличения
 //****************
-
 ex:=abs(sx-dx); ex2:=round(abs(sx-dx))*k div 2;
 ey:=abs(sy-dy);
 ez:=abs(sz-dz);
-(*
-if false then begin
-  memo1.Lines.Add(format('%f  %f  %f',[sx,dx,ex]));
-  memo1.Lines.Add(format('%f  %f  %f',[sy,dy,ey]));
-  memo1.Lines.Add(format('%f  %f  %f',[sz,dz,ez]));
-end;
-*)
 //*********************
-//
+//     время рисовать   **********************************************************
 with image1.Canvas do
 begin
   brush.Color:=clwhite;
   fillrect(cliprect);
   brush.Color:=claqua;
-  //rectangle(0,0,round(ex*k),round(ex*k));
   fillrect(rect(0,0,round(ex*k),round(ey*k)));
   brush.Color:=clsilver;
   fillrect(rect(0,0,-round(dx*k),-round(dy*k)));
   brush.Color:=clblue;
   for i:=0 to high(model.objects[j].vertexes) do
-//**********************
-//if dot[j] then
-//*********************
+//*********************  не вошедшие
     begin
       cx:=model.objects[j].vertexes[i].x-dx;
       cy:=model.objects[j].vertexes[i].y-dy;
@@ -543,23 +403,22 @@ begin
      // x3:=ex2+               round(cos()*           sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
 
     // ii:=cos(arctan2(cx-ex/2,cz-ez/2));
-      x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
-//dot[296]:=dot[296];
+    //if hypot(cz-ez/2,cx-ex/2)  <> sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)) then
+     //  showmessage('ty'#13#10+format('%f %f',[ hypot(cz-ez/2,cx-ex/2),sqrt(sqr(cx-ex/2)+sqr(cz-ez/2))]));
+     // x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
+      x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*hypot(cz-ez/2,cx-ex/2));
       y3:=round((ey-cy)*k);
-      //if i=296 then
-      if dot[i] then
-      fillrect(rect(x3-2,y3-2,x3+2,y3+2));
+      if dot[i] then  // верши не вошедшие в части
+        fillrect(rect(x3-2,y3-2,x3+2,y3+2));
 
-      medx[i]:=point(x3,y3);
-//if  dot[194] then showmessage(inttostr(i));
+      medx[i]:=point(x3,y3);  // проекция
     end;
-//  fg[0].Vertices[0].Vertex[0]:=fg[0].Vertices[0].Vertex[0]; //
 //******************************
 brush.style:=bsclear;
 pen.Color:=clblack; pen.Width:=1;
 polygon([medx[gcu],point(200,200),point(200,8),point(8,8)]); // черная указка
 //*************************
-for j:=0 to high(mot) do
+for j:=0 to high(mot) do   // соединение выбраных вершей
   begin
     setlength(a1,high(mot[j])+1);
     for i:=0 to high(a1) do
@@ -567,69 +426,54 @@ for j:=0 to high(mot) do
         a1[i]:=medx[mot[j][i]];
       end;
     pen.Color:=clred; pen.Width:=3;
-    polygon(a1);////[point(round(cx*k),round((ey-cy)*k)),
-    //point(200,200),point(200,8),point(8,8)]);
+    polygon(a1);////
   end;
 //***************************
-for j:=0 to high(aj) do     // перебор частей
+for j:=0 to high(aj) do     // перебор частей и отрисовка
   begin
     setlength(a1,high(aj[j])+1);
     for i:=0 to high(a1) do
-      //if j=mar then
-     {  if true then    }
         begin
-         // v3:=part[mar][ika];
           v3:=part[j][ika];
           cx:=v3.x-dx;
           cy:=v3.y-dy;
           cz:=v3.z-dz;
-          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
+          //x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
+          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*hypot(cz-ez/2,cx-ex/2));
           y3:=round((ey-cy)*k);
-          //a1[i]:=point(round(x3+1.4*(medx[aj[j][i]].x-x3)), //
-           //  round(y3+1.4*(medx[aj[j][i]].y-y3)));
-
-          a1[i]:=point(round(x3+ale[j]*(medx[aj[j][i]].x-x3)), //1.4
+          a1[i]:=point(round(x3+ale[j]*(medx[aj[j][i]].x-x3)), //
                        round(y3+ale[j]*(medx[aj[j][i]].y-y3)));
         end;
-        {else
-        a1[i]:=medx[aj[j][i]]; }
     pen.Color:=clolive; pen.Width:=1;
          pen.Width:=6;
-    //if j=mar then begin
-    if goy=grop[j] then begin
-      pen.Color:=clfuchsia; pen.Width:=2; //  clyellow;
-       end;
-    polygon(a1);////[point(round(cx*k),round((ey-cy)*k)),
-    //point(200,200),point(200,8),point(8,8)]);
+    if goy=grop[j] then
+      begin
+        pen.Color:=clfuchsia; pen.Width:=2; //
+      end;
+    polygon(a1);////
   end;
-//**************************center of parts
-//for i:=0 to high(part[) do
-//k:=0;
-//mar:=0;
-v3:=part[mar][ika];//[ika];
+//**************************centeres of parts
+v3:=part[mar][ika];// у выбраной группа рисую центр
       cx:=v3.x-dx;
       cy:=v3.y-dy;
       cz:=v3.z-dz;
       x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
       y3:=round((ey-cy)*k);
-      with image1.Canvas do begin
-        brush.Color:=clfuchsia;
-        //fillrect(rect(x3-2,y3-2,x3+2,y3+2));
-        fillrect(rect(x3-4,y3-4,x3+4,y3+4));
-      end;
-//part[2][ika]
-
+      with image1.Canvas do
+        begin
+          brush.Color:=clfuchsia;  /// центр части
+          fillrect(rect(x3-4,y3-4,x3+4,y3+4));
+        end;
 end;
 end;
 
 
 function xota(x: array of integer; y: integer): TVector3; //центр части
-var i: integer;    min1,max1: single;     //  ,j,k
+var i: integer;    min1,max1: single;     //
 begin
 min1:= model.Objects[y].vertexes[x[0]].x; max1:=min1;
 for i:=0 to high(x) do
   begin
-  //showmessage(format('%f',[model.Objects[y].vertexes[x[i]].z]));
     if min1>model.Objects[y].vertexes[x[i]].x then min1:=model.Objects[y].vertexes[x[i]].x;
     if max1<model.Objects[y].vertexes[x[i]].x then max1:=model.Objects[y].vertexes[x[i]].x;
   end;
@@ -672,22 +516,21 @@ for i:=0 to high(part[high(part)]) do //0 do//
 //*********************
 setlength(grop,high(grop)+2);
 grop[high(grop)]:=high(grop);
-
 end;
 
 
-procedure grupe(x: array of integer);
+procedure grupe(x: array of integer); //  по идее несколько частей обьедин в группу
 var i,j,k: integer; min1: integer; v3: tvector3; min2,max2: single;
 begin
-min1:=grop[x[0]];
+min1:=grop[x[0]];    // поиск минимума
 for i:=0 to high(x) do
   if min1>grop[x[i]] then min1:=grop[x[i]];
 for i:=0 to high(x) do grop[x[i]]:=min1;
 //v3:=
-for j:=0 to high(part[x[0]]) do
+for j:=0 to high(part[x[0]]) do  // поиск центра ?  какого?
   begin
     min2:= part[x[0]][j].x; max2:=min2;
-    for i:=0 to high(x) do
+    for i:=0 to high(x) do     // поиск мини макса
       begin
         if min2>part[x[i]][j].x then min2:=part[x[i]][j].x;
         if max2<part[x[i]][j].x then max2:=part[x[i]][j].x;
@@ -711,41 +554,33 @@ for j:=0 to high(part[x[0]]) do
       end;
     v3.z:=min2+(max2-min2)/2;
     //**************************
-    for k:=0 to high(x) do part[x[k]][j]:=v3;
+    for k:=0 to high(x) do part[x[k]][j]:=v3; // центр найден ?
   end;
-
 end;
 
 
-procedure grupe2(x: array of integer; y: single);
+procedure grupe2(x: array of integer; y: single); // групирует масшабит
 var i,j,k: integer;
 begin
-grupe(x);
-for i:=0 to high(x) do ale[x[i]]:=y;
+  grupe(x);
+  for i:=0 to high(x) do ale[x[i]]:=y;
 end;
+
 
 procedure TForm1.FormCreate(Sender: TObject);
 var i,j,k: integer;
-{sx,dx,ex: single;
-sy,dy,ey: single;
-sz,dz,ez: single;
-cx,cy,cz: single; }
 a: array[byte]of integer;
 begin
 //*************************
   decimalseparator:='.';
 
-
-
-
-
 //********************
-setlength(mot,1);
+  setlength(mot,1);//
   with image2.Canvas do
-  begin
-    brush.Color:=clnavy;
-    fillrect(cliprect);
-  end;
+    begin
+      brush.Color:=clnavy;
+      fillrect(cliprect);
+    end;
   for i:=0 to 255 do a[i]:=0;
   fn_key; // ключ подстановки
 //  LoadModel('base\female\tris.md2', Model);
@@ -839,18 +674,19 @@ waq([272, 279, 260],1=1);//bret2                             60
 
 
 //*********************
-  boo(ika);
+  boo(ika);   // отрисовка
 end;
 
 
-procedure ozo(x:integer; y: single);
-var i,j,k,g: integer;
+procedure ozo(x:integer; y: single); //  масштабирую в у раз
+var i,g: integer; //j,k
 begin
-g:=grop[mar];
-for i:=0 to high(grop) do
-  if grop[i]=g then
-    ale[i]:=ale[i]+y;
+  g:=grop[mar];
+  for i:=0 to high(grop) do
+    if grop[i]=g then
+      ale[i]:=ale[i]+y;
 end;
+
 
 procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -864,10 +700,8 @@ j:=ika;
   vk_right:inc(ika);
   // зацени фиктивный вызов маусдауна image2.onMousedown(nil,mbLeft,[],0,0);
   vk_numpad1:image2.onMousedown(nil,mbLeft,[],0,0);
-  vk_numpad7:dec(mar);
+  vk_numpad7:dec(mar); // курсор лдя part
   vk_numpad9:inc(mar);
-
-
   end;
 
   if ika<0 then ika:= high(model.objects);
@@ -879,16 +713,15 @@ j:=ika;
   if gcu<0 then gcu:=high(model.objects[0].vertexes);
   if gcu>high(model.objects[0].vertexes) then gcu:=0;
   //*******************
- // form1.caption:=inttostr(gcu);
   form1.caption:=inttostr(ika);
   //*************************
-  if key=vk_numpad0 then
+  if key=vk_numpad0 then  // доб/удал в mot gsu
     begin
       b:=true;
       for i:=0 to high(mot[high(mot)]) do if gcu=mot[high(mot)][i] then b:=false;
       if b then push(@mot[high(mot)],gcu) else pop(@mot[high(mot)],gcu);
     end;
-  if key=vk_space then
+  if key=vk_space then // доб в mot новую ...
     begin
       setlength(mot,high(mot)+2);
       setlength(mot[high(mot)],1);
@@ -896,11 +729,10 @@ j:=ika;
       setlength(mot[high(mot)-1],high(mot[high(mot)-1]));
     end;
   case key of
-  vk_numpad8:ozo(mar,0.1);//ale[mar]:=ale[mar]+0.1;
-  vk_numpad5:ozo(mar,-0.1);//ale[mar]:=ale[mar]-0.1;
+    vk_numpad8:ozo(mar,0.1);//ale[mar]:=ale[mar]+0.1;
+    vk_numpad5:ozo(mar,-0.1);//ale[mar]:=ale[mar]-0.1;
   end;
 
- // if j<>ika then
   boo(ika);
 end;
 
@@ -914,6 +746,7 @@ begin
   x^[high(x^)]:=y;
 end;
 
+
 procedure tform1.pop(x: parray; y: integer);
 var i,j,k: integer;
 begin
@@ -923,41 +756,40 @@ begin
   setlength(x^,high(x^));
 end;
 
-procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;
+
+procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;  // выбор вертекса
   Shift: TShiftState; X, Y: Integer);
 var i,j,k: integer; r,e: real;
 begin
+	k:=gcu;
+	r:=sqr(medx[k].x-x)+sqr(medx[k].y-y);
+	for i:=0 to high(medx) do
+	// if dot[i] then
+		begin
+			j:=(i+gcu) mod (high(medx)+1);
+			e:=sqr(medx[j].x-x)+sqr(medx[j].y-y);
+			if e<=r then begin r:=e; k:=j  end;
+		end;
+	form1.Caption:=format('%d [%d]',[k,medx[k].y]);
+	gcu:=k;
 
-
-  k:=gcu;
-  r:=sqr(medx[k].x-x)+sqr(medx[k].y-y);
-  for i:=0 to high(medx) do
-   // if dot[i] then
-  begin
-    j:=(i+gcu) mod (high(medx)+1);
-
-    e:=sqr(medx[j].x-x)+sqr(medx[j].y-y);
-    if e<=r then begin r:=e; k:=j  end;
-  end;
-  form1.Caption:=format('%d [%d]',[k,medx[k].y]);
-  gcu:=k;
-
-if mbright in [button] then begin
-
-d:=d+format('%d, ',[k]);
-
+	if mbright in [button] then  // пкм делает.... строку из номеров вершин?  бездумное щелкание по вершинам логируется в строку
+		begin
+			d:=d+format('%d, ',[k]);
+		end;
+	boo(ika);
 end;
-  boo(ika);
-end;
+
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
 pis:=pis+pi/180;
 if pis>2*pi then pis:=0;
-boo(ika);
+boo(ika);   // отрисовка
 end;
 
-procedure TForm1.Image2MouseDown(Sender: TObject; Button: TMouseButton;
+
+procedure TForm1.Image2MouseDown(Sender: TObject; Button: TMouseButton; // вращение вкл/выкл
   Shift: TShiftState; X, Y: Integer);
 var b: boolean;
 begin
@@ -965,7 +797,8 @@ b:=timer1.Enabled;
 timer1.Enabled:=not b;
 end;
 
-procedure TForm1.Panel1Click(Sender: TObject);
+
+procedure TForm1.Panel1Click(Sender: TObject);    // SAVE
 var Filenamein: string;//='base\female\trisin.md2'; // 'base\female — копия\tris.md2'
 var Filenameout: string;//='base\female\tris.md2';
 var i,j,k: integer; min1,max1: single;
@@ -1003,119 +836,10 @@ var i,j,k: integer; min1,max1: single;
 
 
 begin
-//exit;
- (*
-//***************************************************
-kd:=0;// номер кадра
- for kd:=0 to high(model.objects) do   // номер кадра
-begin
-  sx:=model.objects[kd].vertexes[0].x;
-  dx:=model.objects[kd].vertexes[0].x;
-  for k:=0 to  high(model.objects[0].vertexes) do
-    begin
-      if model.objects[kd].vertexes[k].x>sx then sx:=model.objects[kd].vertexes[k].x;
-      if model.objects[kd].vertexes[k].x<dx then dx:=model.objects[kd].vertexes[k].x;
-    end;
-  sy:=model.objects[kd].vertexes[0].y;
-  dy:=model.objects[kd].vertexes[0].y;
-  for k:=0 to  high(model.objects[0].vertexes) do
-    begin
-      if model.objects[kd].vertexes[k].y>sy then sy:=model.objects[kd].vertexes[k].y;
-      if model.objects[kd].vertexes[k].y<dy then dy:=model.objects[kd].vertexes[k].y;
-    end;
-  sz:=model.objects[kd].vertexes[0].z;
-  dz:=model.objects[kd].vertexes[0].z;
-  for k:=0 to  high(model.objects[0].vertexes) do
-    begin
-      if model.objects[kd].vertexes[k].z>sz then sz:=model.objects[kd].vertexes[k].z;
-      if model.objects[kd].vertexes[k].z<dz then dz:=model.objects[kd].vertexes[k].z;
-    end;
-  //****************
-  kf:=1;//9;  // коэф увеличения
-  //****************
-
-  ex:=abs(sx-dx); ex2:=round(abs(sx-dx))*kf div 2;
-  ey:=abs(sy-dy);
-  ez:=abs(sz-dz);
-
-  for ver:=0 to high(c3d[kd]) do//номер вершины
-    begin
-        cx:=model.objects[kd].vertexes[ver].x-dx;
-        cy:=model.objects[kd].vertexes[ver].y-dy;
-        cz:=model.objects[kd].vertexes[ver].z-dz;
-        v3.X:=cx;
-        v3.Y:=cy;
-        v3.Z:=cz;
-  /////      x3:=round(cx*k);
-       //     /центральная       /сумарный угол палки    /длина палки
-       // x3:=ex2+               round(cos()*           sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
-
-
-       // x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
-
-  /////      y3:=round(cy*k); //y3:=round((ey-cy)*k); //
-
-        c3d[kd][ver]:= v3;
-    end;
-   // найти центры фигур
-
-  for ii:=0 to high(aj) do // перебор частей
-    begin
-      v3:=part[ii][kd];//ii-part  i-cadr
-      for jj:=0 to high(aj[ii]) do  // вершины
-        begin
-          v4:=c3d[kd][aj[ii][jj]];
-          v4.X:=v3.x+(v4.X-v3.X)*ale[ii];
-          v4.y:=v3.y+(v4.y-v3.y)*ale[ii];
-          v4.z:=v3.z+(v4.z-v3.z)*ale[ii];
-          c3d[kd][aj[ii][jj]]:=v4;
-        end;
-    end;
-
- // теперь поступаем с выступающими вершинами. может обкарнать просто их?
-  for ver:=0 to high(c3d[kd]) do
-    begin
-      if (c3d[kd][ver].x<0)then c3d[kd][ver].x:=0;
-      if (c3d[kd][ver].y<0)then c3d[kd][ver].y:=0;
-      if (c3d[kd][ver].z<0)then c3d[kd][ver].z:=0;
-
-      if (c3d[kd][ver].x>ex)then c3d[kd][ver].x:=ex;
-      if (c3d[kd][ver].y>ey)then c3d[kd][ver].y:=ey;
-      if (c3d[kd][ver].z>ez)then c3d[kd][ver].z:=ez;
-     // if model.objects[kd].vertexes[ver].y>sx then sx:=model.objects[kd].vertexes[ver].x;
-      //if model.objects[kd].vertexes[ver].y<dx then dx:=model.objects[kd].vertexes[ver].x;
-    end;
-
-
-  r:=(ex/255);
-  j:=128;
-  for ver:=0 to high(c3d[kd]) do
-    begin
-      v3:=c3d[kd][ver];
-      i:=round(v3.X / r);
-    end;
-
-  r:=(ey/255);
-  for ver:=0 to high(c3d[kd]) do
-    begin
-      v3:=c3d[kd][ver];
-      i:=round(v3.y / r);
-    end;
-
-  r:=(ez/255);
-  for ver:=0 to high(c3d[kd]) do
-    begin
-      v3:=c3d[kd][ver];
-      i:=round(v3.z / r);
-    end;
-
-end;//cadr
-  *)
-
 //************************
 //************************
 Filenamein:='base\female\trisin.md2'; // 'base\female — копия\tris.md2'
-Filenameout:='base\female\tris.md2';
+Filenameout:='base\female\tris.md2';   // пишется сюда
 // Load model form file
 
  Assignfile(F1, Filenamein);  //[Error] Unit2md2.pas(1011): Incompatible types: 'TPersistent' and 'file'
@@ -1152,7 +876,6 @@ Reset(F1, 1);
    StrCopy(Frames[i].Name, Frame.Name);
    fg[i]:=frame;
    end;
-
  Closefile(F1);//
 
 //*************************************************
@@ -1194,11 +917,7 @@ for kd:=0 to high(model.objects) do   // номер кадра
         cx:=model.objects[kd].vertexes[ver].x-dx;
         cy:=model.objects[kd].vertexes[ver].y-dy;
         cz:=model.objects[kd].vertexes[ver].z-dz;
-        {
-        v3.X:=cx*kf;
-        v3.Y:=cy*kf;
-        v3.Z:=cz*kf;
-           }
+
         v3.X:=cx;
         v3.Y:=cy;
         v3.Z:=cz;
@@ -1207,12 +926,9 @@ for kd:=0 to high(model.objects) do   // номер кадра
 
 // найти центры фигур
 (*       *)
-  for ii:=0 to high(aj) do // перебор частей
+  for ii:=0 to high(aj) do // перебор частей  увеличение их на величину
     begin
       v3:=part[ii][kd];//ii-part  i-cadr
-     // v3.X:=v3.X/9;
-     // v3.Y:=v3.Y/9;
-     // v3.Z:=v3.Z/9;
 
       v3.X:=v3.X-dx;
       v3.Y:=v3.Y-dy;
@@ -1221,7 +937,7 @@ for kd:=0 to high(model.objects) do   // номер кадра
       for jj:=0 to high(aj[ii]) do  // вершины
         begin
           v4:=c3d[kd][aj[ii][jj]];
-          v4.X:=v3.x+(v4.X-v3.X)*ale[ii];
+          v4.X:=v3.x+(v4.X-v3.X)*ale[ii];  // применяю мосштаб части
           v4.y:=v3.y+(v4.y-v3.y)*ale[ii];
           v4.z:=v3.z+(v4.z-v3.z)*ale[ii];
           c3d[kd][aj[ii][jj]]:=v4;
@@ -1244,7 +960,7 @@ for kd:=0 to high(model.objects) do   // номер кадра
     
 //
 
-      (*        *)
+      (*   перевод в формат для записи в файл     *)
     
     j:=128;
     for ver:=0 to high(c3d[kd]) do
@@ -1252,14 +968,10 @@ for kd:=0 to high(model.objects) do   // номер кадра
         v3:=c3d[kd][ver];
         r:=(ex/255);
         fg[kd].Vertices[ver].vertex[0]:=round(v3.X / r);
-        //if  fg[kd].Vertices[ver].vertex[0]<>round(v3.X / r) then showmessage(format('ебля х=%d',[ver]));
         r:=(ey/255);
         fg[kd].Vertices[ver].vertex[2]:=round(v3.y / r);
-        //if  fg[kd].Vertices[ver].vertex[2]<>round(v3.y / r) then showmessage(format('ебля y=%d',[ver]));
         r:=(ez/255);
         fg[kd].Vertices[ver].vertex[1]:=255-round(v3.z / r);
-       // if  fg[kd].Vertices[ver].vertex[1]<>255-round(v3.z / r) then
-       // showmessage(format('ебля z=%d %d %d',[ver,fg[kd].Vertices[ver].vertex[1],255-round(v3.z / r)]));
       end;
 
 
@@ -1269,22 +981,9 @@ for kd:=0 to high(model.objects) do   // номер кадра
   end;// kd
 
 //*********************************************
-      (*
- //широкая кость
- for i:=0 to Header.NumFrames-1 do
-   for j:=0 to Header.NumVertices-1 do
-     begin
-     //fg[i].Vertices[0].Vertex[0].
-       fg[i].Vertices[j].vertex[0]:=key[fg[i].Vertices[j].vertex[0]];
-       fg[i].Vertices[j].vertex[1]:=key[fg[i].Vertices[j].vertex[1]];
-       fg[i].Vertices[j].vertex[2]:=key[fg[i].Vertices[j].vertex[2]];
-     end;
-    *)
-
-
 
 //***********************************************
- // Load model form file
+ // Save model to file
  Assignfile(F2, Filenameout);
  Reset(F2, 1);
  for i:=0 to Header.NumFrames - 1 do
@@ -1297,18 +996,9 @@ for kd:=0 to high(model.objects) do   // номер кадра
    end;
  Closefile(F2);//
 //************************
-showmessage('ну блять за ебись'#13#10'base\female\tris.md2');
-
-
- {
-   Seek(F, Header.OffsetFrames+i*(SizeOf(Frame.Scale)+SizeOf(Frame.Translate)+SizeOf(Frame.Name)+SizeOf(TMD2AliasTriangle) * Header.NumVertices));
-  BlockWrite(F, Frame.Scale, SizeOf(Frame.Scale));
-   BlockWrite(F, Frame.Translate, SizeOf(Frame.Translate));
-   BlockWrite(F, Frame.Name, SizeOf(Frame.Name));
-   BlockWrite(F, Frame.Vertices[0], SizeOf(TMD2AliasTriangle) * Header.NumVertices);
-}
-
+showmessage('ну блять за ебись записано в'#13#10'base\female\tris.md2'); // пишется сюда
 end;
+
 
 end.
 {
