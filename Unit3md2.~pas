@@ -8,7 +8,7 @@ interface
 
 uses  opengl, math,
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls;
+  Dialogs, StdCtrls, ExtCtrls, Menus;
 
 
 {
@@ -30,6 +30,9 @@ type
     Panel1: TPanel;
     Memo1: TMemo;
     Memo2: TMemo;
+    MainMenu1: TMainMenu;
+    here1: TMenuItem;
+    header1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -39,6 +42,9 @@ type
     procedure Image2MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure Panel1Click(Sender: TObject);
+    procedure here1Click(Sender: TObject);
+    procedure header1Click(Sender: TObject);
+
   private
     { Private declarations }
   public
@@ -219,6 +225,7 @@ var
  grop: array of integer;// принадлежность частей групам
  goy: integer;// група
  c3d: array of array of tvector3;
+ hdr: TMD2Header;
 
 implementation
 
@@ -285,6 +292,8 @@ begin
    BlockRead(F, Frame.Vertices[0], SizeOf(TMD2AliasTriangle) * Header.NumVertices);
    SetLength(Frames[i].Vertices, Header.NumVertices);
    StrCopy(Frames[i].Name, Frame.Name);
+
+   hdr:=header;
 
   for j := 4440 to Header.NumVertices - 1 do  // делаю бочку
     begin  // уродую    *****************************************************************
@@ -438,7 +447,8 @@ for j:=0 to high(aj) do     // перебор частей и отрисовка
           cx:=v3.x-dx;
           cy:=v3.y-dy;
           cz:=v3.z-dz;
-          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
+          //x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*sqrt(sqr(cx-ex/2)+sqr(cz-ez/2)));
+          x3:=ex2+  round(k*cos(pis+arctan2(cz-ez/2,cx-ex/2))*hypot(cz-ez/2,cx-ex/2));
           y3:=round((ey-cy)*k);
           a1[i]:=point(round(x3+ale[j]*(medx[aj[j][i]].x-x3)), //
                        round(y3+ale[j]*(medx[aj[j][i]].y-y3)));
@@ -998,6 +1008,64 @@ for kd:=0 to high(model.objects) do   // номер кадра
 showmessage('ну блять за ебись записано в'#13#10'base\female\tris.md2'); // пишется сюда
 end;
 
+
+procedure TForm1.here1Click(Sender: TObject);
+begin
+showmessage(paramstr(0));
+end;
+
+procedure TForm1.header1Click(Sender: TObject);
+begin
+memo2.Clear;
+memo2.Font.Size:=11;
+memo2.lines.Add(format('%s%s%s%s',
+[
+chr((hdr.Magic and $ff) shr 0),
+chr((hdr.Magic and $ff00) shr 8),
+chr((hdr.Magic and $ff0000) shr 16),
+chr((hdr.Magic and $ff000000) shr 24)
+]));
+memo2.lines.Add(format('%d - версия',[hdr.Version]));
+memo2.lines.Add(format('%d - длина скина',[hdr.SkinWidth]));
+memo2.lines.Add(format('%d - высота скина',[hdr.SkinHeight]));
+memo2.lines.Add(format('%d - размер кадра',[hdr.FrameSize]));
+memo2.lines.Add(format('%d - колво скинов',[hdr.NumSkins]));
+memo2.lines.Add(format('%d - колво вершин',[hdr.NumVertices]));
+memo2.lines.Add(format('%d - колво тексткоорд',[hdr.NumTexCoords]));
+memo2.lines.Add(format('%d - колво треугов',[hdr.NumTriangles]));
+memo2.lines.Add(format('%d - колво GL',[hdr.NumGLCommands]));
+memo2.lines.Add(format('%d - колво кадров',[hdr.NumFrames]));
+
+memo2.lines.Add(format('%d - смещение скинов',[hdr.OffsetSkins]));
+memo2.lines.Add(format('%d - смещение тексткоорд',[hdr.OffsetTexCoords]));
+memo2.lines.Add(format('%d - смещ треугов',[hdr.OffsetTriangles]));
+memo2.lines.Add(format('%d - смещ кадров',[hdr.OffsetFrames]));
+memo2.lines.Add(format('%d - смещение GL',[hdr.OffsetGLCommands]));
+memo2.lines.Add(format('%d - смещ конца',[hdr.OffsetEnd]));
+end;
+
+
+
+
+   {
+    Magic,
+    Version,
+    SkinWidth,
+    SkinHeight,
+    FrameSize,
+    NumSkins,
+    NumVertices,
+    NumTexCoords,
+    NumTriangles,
+    NumGLCommands,
+    NumFrames,
+    OffsetSkins,
+    OffsetTexCoords,
+    OffsetTriangles,
+    OffsetFrames,
+    OffsetGLCommands,
+    OffsetEnd: Integer;
+    }
 
 end.
 {

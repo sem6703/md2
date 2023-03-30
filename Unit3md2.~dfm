@@ -4,24 +4,25 @@ object Form1: TForm1
   Width = 937
   Height = 599
   Caption = 'Fun md2'
-  Color = clBtnFace
+  Color = 14544605
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   KeyPreview = True
+  Menu = MainMenu1
   OldCreateOrder = False
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   DesignSize = (
     921
-    560)
+    540)
   PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
     Left = 16
-    Top = 16
+    Top = 8
     Width = 617
     Height = 521
     OnMouseDown = Image1MouseDown
@@ -72,7 +73,7 @@ object Form1: TForm1
       Left = 8
       Top = 24
       Width = 257
-      Height = 313
+      Height = 417
       BevelInner = bvLowered
       BevelOuter = bvRaised
       Font.Charset = DEFAULT_CHARSET
@@ -89,7 +90,9 @@ object Form1: TForm1
         'Up - prev vertex'
         'Down - next vertex'
         'Left - prev cadr'
-        'Right - next cadr')
+        'Right - next cadr'
+        'Num0 - '
+        'Space - ')
       ParentFont = False
       ReadOnly = True
       TabOrder = 2
@@ -101,5 +104,17 @@ object Form1: TForm1
     OnTimer = Timer1Timer
     Left = 1008
     Top = 32
+  end
+  object MainMenu1: TMainMenu
+    Left = 56
+    Top = 32
+    object here1: TMenuItem
+      Caption = 'here'
+      OnClick = here1Click
+    end
+    object header1: TMenuItem
+      Caption = 'header'
+      OnClick = header1Click
+    end
   end
 end
