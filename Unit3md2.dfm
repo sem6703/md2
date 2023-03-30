@@ -116,5 +116,17 @@ object Form1: TForm1
       Caption = 'header'
       OnClick = header1Click
     end
+    object textcoord1: TMenuItem
+      Caption = 'textcoord'
+    end
+    object treugi1: TMenuItem
+      Caption = 'treugi'
+    end
+    object cadrs1: TMenuItem
+      Caption = 'cadrs'
+    end
+    object GLdata1: TMenuItem
+      Caption = 'GL-data'
+    end
   end
 end

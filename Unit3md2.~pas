@@ -1038,10 +1038,10 @@ memo2.lines.Add(format('%d - колво кадров',[hdr.NumFrames]));
 
 memo2.lines.Add(format('%d - смещение скинов',[hdr.OffsetSkins]));
 memo2.lines.Add(format('%d - смещение тексткоорд',[hdr.OffsetTexCoords]));
- memo2.lines.Add(format('%d - смещ треугов',[hdr.OffsetTriangles]));
+memo2.lines.Add(format('%d - смещ треугов',[hdr.OffsetTriangles]));
 memo2.lines.Add(format('%d - смещ кадров',[hdr.OffsetFrames]));
 memo2.lines.Add(format('%d - смещение GL',[hdr.OffsetGLCommands]));
- memo2.lines.Add(format('%d - смещ конца',[hdr.OffsetEnd]));
+memo2.lines.Add(format('%d - смещ конца',[hdr.OffsetEnd]));
 end;
 
 

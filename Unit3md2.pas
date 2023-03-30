@@ -33,6 +33,10 @@ type
     MainMenu1: TMainMenu;
     here1: TMenuItem;
     header1: TMenuItem;
+    textcoord1: TMenuItem;
+    treugi1: TMenuItem;
+    cadrs1: TMenuItem;
+    GLdata1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
