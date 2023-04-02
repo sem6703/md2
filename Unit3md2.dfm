@@ -118,15 +118,19 @@ object Form1: TForm1
     end
     object textcoord1: TMenuItem
       Caption = 'textcoord'
+      OnClick = textcoord1Click
     end
     object treugi1: TMenuItem
       Caption = 'treugi'
+      OnClick = treugi1Click
     end
     object cadrs1: TMenuItem
       Caption = 'cadrs'
+      OnClick = cadrs1Click
     end
     object GLdata1: TMenuItem
       Caption = 'GL-data'
+      OnClick = GLdata1Click
     end
   end
 end
