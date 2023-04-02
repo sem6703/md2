@@ -48,6 +48,10 @@ type
     procedure Panel1Click(Sender: TObject);
     procedure here1Click(Sender: TObject);
     procedure header1Click(Sender: TObject);
+    procedure GLdata1Click(Sender: TObject);
+    procedure treugi1Click(Sender: TObject);
+    procedure textcoord1Click(Sender: TObject);
+    procedure cadrs1Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -84,7 +88,7 @@ type
   end;
  type
   TMD2Face = record  //
-    VertexIndices, TextureIndices: array [0..2] of SmallInt;
+    VertexIndices, TextureIndices: array [0..2] of SmallInt; //
   end;
 
 type
@@ -231,6 +235,10 @@ var
  c3d: array of array of tvector3;
  hdr: TMD2Header;
 
+ //****
+ treugs: array of TMD2Face;
+     Frames: array of TMD2Frame;
+
 implementation
 
 {$R *.dfm}
@@ -262,7 +270,7 @@ var F: File;
     Header: TMD2Header;
     TexCoords: array of TMD2TexCoord;
     Triangles: array of TMD2Face;
-    Frames: array of TMD2Frame;
+ //   Frames: array of TMD2Frame;
     Frame: TMD2AliasFrame;
     CurrentFrame: T3DObject;
     FrameNum: Integer;
@@ -317,6 +325,9 @@ begin
   end;
  Close(F);//
 //************************
+         setlength(treugs,sizeof(Triangles));
+         for i:=0 to high(treugs) do treugs[i]:=Triangles[i];
+//*************
 
  Model.NumObjects := Header.NumFrames;
  SetLength(Model.Objects, Model.NumObjects);
@@ -1070,6 +1081,45 @@ end;
     OffsetGLCommands,
     OffsetEnd: Integer;
     }
+
+procedure TForm1.GLdata1Click(Sender: TObject);
+begin
+memo2.Clear;
+
+end;
+
+procedure TForm1.treugi1Click(Sender: TObject);
+begin
+
+memo2.Clear;
+memo2.Font.Size:=11;
+memo2.lines.Add(format('%d %d %d    %d %d %d',
+[
+treugs[0].VertexIndices[0],
+treugs[0].VertexIndices[1],
+treugs[0].VertexIndices[2],
+treugs[0].TextureIndices[0],
+treugs[0].TextureIndices[1],
+treugs[0].TextureIndices[2]
+]));
+
+
+end;
+
+procedure TForm1.textcoord1Click(Sender: TObject);
+begin
+ memo2.Clear;
+end;
+
+procedure TForm1.cadrs1Click(Sender: TObject); // infa о кадре
+begin
+memo2.Clear;
+memo2.Lines.Add(format('%d',[ika]));
+memo2.Lines.Add(Frames[ika].Name );
+
+
+
+end;
 
 end.
 {

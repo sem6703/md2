@@ -33,6 +33,10 @@ type
     MainMenu1: TMainMenu;
     here1: TMenuItem;
     header1: TMenuItem;
+    textcoord1: TMenuItem;
+    treugi1: TMenuItem;
+    cadrs1: TMenuItem;
+    GLdata1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -44,6 +48,10 @@ type
     procedure Panel1Click(Sender: TObject);
     procedure here1Click(Sender: TObject);
     procedure header1Click(Sender: TObject);
+    procedure GLdata1Click(Sender: TObject);
+    procedure treugi1Click(Sender: TObject);
+    procedure textcoord1Click(Sender: TObject);
+    procedure cadrs1Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -80,7 +88,7 @@ type
   end;
  type
   TMD2Face = record  //
-    VertexIndices, TextureIndices: array [0..2] of SmallInt;
+    VertexIndices, TextureIndices: array [0..2] of SmallInt; //
   end;
 
 type
@@ -227,6 +235,9 @@ var
  c3d: array of array of tvector3;
  hdr: TMD2Header;
 
+ //****
+ treugs: array of TMD2Face;
+
 implementation
 
 {$R *.dfm}
@@ -313,6 +324,9 @@ begin
   end;
  Close(F);//
 //************************
+         setlength(treugs,sizeof(Triangles));
+         for i:=0 to high(treugs) do treugs[i]:=Triangles[i];
+//*************
 
  Model.NumObjects := Header.NumFrames;
  SetLength(Model.Objects, Model.NumObjects);
@@ -1066,6 +1080,40 @@ end;
     OffsetGLCommands,
     OffsetEnd: Integer;
     }
+
+procedure TForm1.GLdata1Click(Sender: TObject);
+begin
+memo2.Clear;
+
+end;
+
+procedure TForm1.treugi1Click(Sender: TObject);
+begin
+
+memo2.Clear;
+memo2.Font.Size:=11;
+memo2.lines.Add(format('%d %d %d    %d %d %d',
+[
+treugs[0].VertexIndices[0],
+treugs[0].VertexIndices[1],
+treugs[0].VertexIndices[2],
+treugs[0].TextureIndices[0],
+treugs[0].TextureIndices[1],
+treugs[0].TextureIndices[2]
+]));
+
+
+end;
+
+procedure TForm1.textcoord1Click(Sender: TObject);
+begin
+ memo2.Clear;
+end;
+
+procedure TForm1.cadrs1Click(Sender: TObject); // infa о кадре
+begin
+memo2.Clear;
+end;
 
 end.
 {
